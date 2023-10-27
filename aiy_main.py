@@ -12,6 +12,23 @@ from src.utils.init_path import init_path
 
 import typing
 
+from aiy_log import logger
+from aiy_scheduler import Task
+
+class SadTalkerTask(Task):
+    source_image: str
+    drive_audio: str
+
+    def __init__(self, image_path: str, audio_path: str) -> None:
+        self.source_image = image_path
+        self.drive_audio = audio_path
+        super().__init__()
+
+    def run(self):
+        # generate mp4 by sadtalker
+        args = SadTalkerArgs(self.drive_audio, self.source_image, preprocess='full', filename=self.id)
+        gen_sad_talker(args)
+
 class SadTalkerArgs:
     source_image: str
     driven_audio: str
@@ -51,8 +68,10 @@ class SadTalkerArgs:
     z_near: float
     z_far: float
 
+    # filename
+    filename: str | None
 
-    def __init__(self, driven_audio, source_image, preprocess: str = 'crop'):
+    def __init__(self, driven_audio, source_image, preprocess: str = 'crop', filename: str | None = None):
         self.device = 'cpu'
         self.driven_audio = driven_audio
         self.source_image = source_image
@@ -89,10 +108,14 @@ class SadTalkerArgs:
         self.z_near = 5.
         self.z_far = 15.
 
+        self.filename = filename
+
 def gen_sad_talker(args: SadTalkerArgs):
+    logger.info('Start to generate sad-talker video')
     pic_path = args.source_image
     audio_path = args.driven_audio
-    save_dir = os.path.join(args.result_dir, strftime("%Y_%m_%d_%H.%M.%S"))
+    filename = strftime("%Y_%m_%d_%H.%M.%S") if args.filename is None else args.filename
+    save_dir = os.path.join(args.result_dir, filename)
     os.makedirs(save_dir, exist_ok=True)
     pose_style = args.pose_style
     device = args.device
@@ -117,7 +140,7 @@ def gen_sad_talker(args: SadTalkerArgs):
     #crop image and extract 3dmm from image
     first_frame_dir = os.path.join(save_dir, 'first_frame_dir')
     os.makedirs(first_frame_dir, exist_ok=True)
-    print('3DMM Extraction for source image')
+    logger.info('3DMM Extraction for source image')
     first_coeff_path, crop_pic_path, crop_info =  preprocess_model.generate(pic_path, first_frame_dir, args.preprocess,\
                                                                              source_image_flag=True, pic_size=args.size)
     if first_coeff_path is None:
@@ -128,7 +151,7 @@ def gen_sad_talker(args: SadTalkerArgs):
         ref_eyeblink_videoname = os.path.splitext(os.path.split(ref_eyeblink)[-1])[0]
         ref_eyeblink_frame_dir = os.path.join(save_dir, ref_eyeblink_videoname)
         os.makedirs(ref_eyeblink_frame_dir, exist_ok=True)
-        print('3DMM Extraction for the reference video providing eye blinking')
+        logger.info('3DMM Extraction for the reference video providing eye blinking')
         ref_eyeblink_coeff_path, _, _ =  preprocess_model.generate(ref_eyeblink, ref_eyeblink_frame_dir, args.preprocess, source_image_flag=False)
     else:
         ref_eyeblink_coeff_path=None
@@ -140,7 +163,7 @@ def gen_sad_talker(args: SadTalkerArgs):
             ref_pose_videoname = os.path.splitext(os.path.split(ref_pose)[-1])[0]
             ref_pose_frame_dir = os.path.join(save_dir, ref_pose_videoname)
             os.makedirs(ref_pose_frame_dir, exist_ok=True)
-            print('3DMM Extraction for the reference video providing pose')
+            logger.info('3DMM Extraction for the reference video providing pose')
             ref_pose_coeff_path, _, _ =  preprocess_model.generate(ref_pose, ref_pose_frame_dir, args.preprocess, source_image_flag=False)
     else:
         ref_pose_coeff_path=None
@@ -162,16 +185,18 @@ def gen_sad_talker(args: SadTalkerArgs):
     result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info, \
                                 enhancer=args.enhancer, background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
     
-    shutil.move(result, save_dir+'.mp4')
-    print('The generated video is named:', save_dir+'.mp4')
+    video_path = save_dir+'.mp4'
+    shutil.move(result, video_path)
+    logger.info('The generated video is named:' + video_path)
 
     if not args.verbose:
         shutil.rmtree(save_dir)
 
+    logger.info(f'Generate {video_path}')
     
 if __name__ == '__main__':
 
-    args = SadTalkerArgs('./examples/driven_audio/bus_chinese.wav', './examples/source_image/full_body_1.png', preprocess='full')
+    args = SadTalkerArgs('./examples/driven_audio/bus_chinese.wav', './examples/source_image/full_body_1.png', preprocess='full', filename='example')
 
     if torch.cuda.is_available() and not args.cpu:
         args.device = "cuda"

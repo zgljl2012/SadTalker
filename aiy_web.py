@@ -2,10 +2,14 @@ from flask import Flask, abort, request, send_file
 import os
 from flask_cors import CORS
 import base64
-from aiy_main import gen_sad_talker, SadTalkerArgs
+from aiy_main import SadTalkerTask
+from aiy_scheduler import Scheduler
 
 app = Flask(__name__)
 CORS(app, origins="*")
+
+sched = Scheduler()
+sched.async_run()
 
 @app.route("/")
 def hello_world():
@@ -13,7 +17,6 @@ def hello_world():
 
 @app.route("/sadtalker", methods=['POST'])
 def sad_talker():
-    print('--->>>1')
     data = request.json
     # Base64
     image = data['image']
@@ -33,9 +36,10 @@ def sad_talker():
         audio_path = f'{tmp_dir}/audio.{audio_ext}'
         with open(audio_path, 'wb') as fw:
             fw.write(base64.b64decode(audio))
-        # generate mp4 by sadtalker
-        args = SadTalkerArgs(audio_path, img_path, preprocess='full')
-        gen_sad_talker(args)
+        req = sched.submit_task(SadTalkerTask(img_path, audio_path))
+        return {
+            'id': req.req_id
+        }
     except Exception as e:
         print(e)
         return {
@@ -44,7 +48,6 @@ def sad_talker():
     finally:
         # TODO Remove tmp directory
         pass
-    return { "status": "success" }
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=False)
