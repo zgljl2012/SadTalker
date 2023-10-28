@@ -49,5 +49,24 @@ def sad_talker():
         # TODO Remove tmp directory
         pass
 
+@app.route("/progress/<id>")
+def check_tts(id: str):
+    if id:
+        task = sched.check_status(id)
+        if task:
+            return {
+                'status': str(task.status),
+                'start_at': task.start_at
+            }
+    abort(404)
+
+@app.route("/get_video/<id>.mp4")
+def get_mp4(id):
+    wav_path = f'results/{id}.mp4'
+    if os.path.exists(wav_path):
+        return send_file(wav_path, download_name=f'{id}.mp4')
+    abort(404)
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001, debug=False)

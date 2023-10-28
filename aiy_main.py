@@ -11,9 +11,15 @@ from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
 import typing
+import time
 
 from aiy_log import logger
 from aiy_scheduler import Task
+
+import subprocess
+
+def convert_video(video_input, video_output):
+    subprocess.run(f"ffmpeg -i {video_input} -c:v libx264 -c:a aac {video_output}".split(' '))
 
 class SadTalkerTask(Task):
     source_image: str
@@ -132,9 +138,7 @@ def gen_sad_talker(args: SadTalkerArgs):
 
     #init model
     preprocess_model = CropAndExtract(sadtalker_paths, device)
-
     audio_to_coeff = Audio2Coeff(sadtalker_paths,  device)
-    
     animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
 
     #crop image and extract 3dmm from image
@@ -191,6 +195,15 @@ def gen_sad_talker(args: SadTalkerArgs):
 
     if not args.verbose:
         shutil.rmtree(save_dir)
+
+    time.sleep(1)
+
+    # 不做此转换，则不能在 HTML 中播放
+    # https://stackoverflow.com/questions/59670331/converting-mp4-aac-to-avc-using-python
+    video_path_avc = video_path + '.avc.mp4'
+    convert_video(video_path, video_path_avc)
+    os.remove(video_path)
+    os.rename(video_path_avc, video_path)
 
     logger.info(f'Generate {video_path}')
     
