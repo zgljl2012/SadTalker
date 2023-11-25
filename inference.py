@@ -5,12 +5,12 @@ from time import  strftime
 import os, sys, time
 from argparse import ArgumentParser
 
-from src.utils.preprocess import CropAndExtract
-from src.test_audio2coeff import Audio2Coeff  
-from src.facerender.animate import AnimateFromCoeff
-from src.generate_batch import get_data
-from src.generate_facerender_batch import get_facerender_data
-from src.utils.init_path import init_path
+from sadtalker.utils.preprocess import CropAndExtract
+from sadtalker.test_audio2coeff import Audio2Coeff  
+from sadtalker.facerender.animate import AnimateFromCoeff
+from sadtalker.generate_batch import get_data
+from sadtalker.generate_facerender_batch import get_facerender_data
+from sadtalker.utils.init_path import init_path
 
 def main(args):
     #torch.backends.cudnn.enabled = False
@@ -30,7 +30,7 @@ def main(args):
 
     current_root_path = os.path.split(sys.argv[0])[0]
 
-    sadtalker_paths = init_path(args.checkpoint_dir, os.path.join(current_root_path, 'src/config'), args.size, args.old_version, args.preprocess)
+    sadtalker_paths = init_path(args.checkpoint_dir, os.path.join(current_root_path, 'sadtalker/config'), args.size, args.old_version, args.preprocess)
 
     #init model
     preprocess_model = CropAndExtract(sadtalker_paths, device)
@@ -76,7 +76,7 @@ def main(args):
 
     # 3dface render
     if args.face3dvis:
-        from src.face3d.visualize import gen_composed_video
+        from sadtalker.face3d.visualize import gen_composed_video
         gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, '3dface.mp4'))
     
     #coeff2video

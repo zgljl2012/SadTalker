@@ -176,7 +176,7 @@ def on_ui_tabs():
     else:
         checkpoint_path = repo_dir+'checkpoints/'
 
-    audio_to_video = sadtalker_demo(checkpoint_path=checkpoint_path, config_path=repo_dir+'src/config', warpfn = wrap_queued_call)
+    audio_to_video = sadtalker_demo(checkpoint_path=checkpoint_path, config_path=repo_dir+'sadtalker/config', warpfn = wrap_queued_call)
    
     return [(audio_to_video, "SadTalker", "extension")]
 

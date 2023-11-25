@@ -2,7 +2,7 @@ from flask import Flask, abort, request, send_file
 import os
 from flask_cors import CORS
 import base64
-from aiy_main import SadTalkerTask
+from aiy_sadtalker import SadTalkerTask
 from aiy_scheduler import Scheduler
 
 app = Flask(__name__)
