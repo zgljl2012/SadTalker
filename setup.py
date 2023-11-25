@@ -11,7 +11,7 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=[
-        "numpy>=1.23.4",
+        "numpy==1.23.4",
         "face_alignment>=1.3.5",
         "imageio>=2.19.3",
         "imageio-ffmpeg>=0.4.7",
@@ -31,6 +31,8 @@ setup(
         "gradio",
         "gfpgan",
         "av",
-        "safetensors"
+        "safetensors",
+        "pyaiy",
+        "opencv-python"
     ]
 )
