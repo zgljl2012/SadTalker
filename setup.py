@@ -2,13 +2,13 @@ from setuptools import setup
 from setuptools import find_packages
 
 
-VERSION = '0.1.1'
+VERSION = '0.1.6'
 
 setup(
     name='sadtalker_z',  # package name
     version=VERSION,  # package version
     description='sadtalker',  # package description
-    packages=find_packages(),
+    packages=find_packages("."),
     zip_safe=False,
     install_requires=[
         "numpy==1.23.4",
